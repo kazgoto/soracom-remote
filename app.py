@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, redirect, make_response, session, url_for
-from urllib import urlencode
-import os
 import httplib2
 import json
 
@@ -79,7 +77,6 @@ def modify(imsi):
     new_type = request.args.get('new_type')
     old_type = request.args.get('old_type')
     error, sim = _call_api('/subscribers/' + imsi + '/update_speed_class', 'POST', { 'speedClass': new_type })
-    message = ''
     if error == '':
         message = 'SIM {} のタイプを {} から {} に変更しました。'.format(imsi, old_type, new_type)
     error, sims = _call_api('/subscribers', 'GET', {})
@@ -88,7 +85,6 @@ def modify(imsi):
 @app.route('/sim/<imsi>/activate', methods=['GET'])
 def activate(imsi):
     error, sim = _call_api('/subscribers/' + imsi + '/activate', 'POST', {})
-    message = ''
     if error == '':
         message = 'SIM {} を利用可能にしました。'.format(imsi)
     error, sims = _call_api('/subscribers', 'GET', {})
@@ -97,12 +93,11 @@ def activate(imsi):
 @app.route('/sim/<imsi>/deactivate', methods=['GET'])
 def deactivate(imsi):
     error, sim = _call_api('/subscribers/' + imsi + '/deactivate', 'POST', {})
-    message = ''
     if error == '':
-        message = 'SIM {} を利用可能にしました。'.format(imsi)
+        message = 'SIM {} を利用停止（休止状態）しました。'.format(imsi)
     error, sims = _call_api('/subscribers', 'GET', {})
     return render_template('index.html', sims=sims, message=unicode(message, 'utf-8'), error=error)
 
 # main
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0',port=80)
