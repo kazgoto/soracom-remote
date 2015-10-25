@@ -51,7 +51,7 @@ def _is_authorized():
 def before_request():
     if session.get('apiKey') is not None:
         return
-    if request.path == '/login':
+    if request.path == '/login' or request.path.find('/static') == 0:
         return
     return redirect('/login')
 
