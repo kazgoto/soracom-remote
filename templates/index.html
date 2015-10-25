@@ -11,18 +11,29 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}" />
   </head>
   <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
+    <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
           <a class="navbar-brand" href="/">SORACOM Remote</a>
         </div>
-        <ul class="nav navbar-nav navbar-right">
-          <li><a href="../logout">サインアウト</a></li>
-        </ul>
-      </div><!--/.nav-collapse -->
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/">ホーム</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="/logout">サインアウト</a></li>
+          </ul>
+        </div>
+      </div>
     </nav>
 
-    <div class="jumbotron" style="margin-top:0px">
+    <div class="jumbotron" style="margin-top:20px">
     <div class="container" style="width:70%">
 {% if error   %}
     <div class="alert alert-dismissible alert-danger" role="alert">
@@ -64,6 +75,7 @@
 {% endfor %}
 
     <!-- Latest compiled and minified JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     </div>
     </div>
