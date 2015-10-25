@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, redirect, make_response, session, url_for
-from functools import wraps
 from urllib import urlencode
 import os
 import httplib2
@@ -19,18 +18,16 @@ def _call_api(path, method, params):
         'Content-Type'      : 'application/json'
     }
     resp, content = h.request(api_url + path, method, json.dumps(params), headers=headers)
-    # print 'path = {}, method = {}, json = {}'.format(path, method, json.dumps(params))
-    err = ''
+    error = ''
     if resp.status != 200:
-        err = 'Response is bad: ' + str(resp.status) + ' ' + content
+        error = 'Response is bad: ' + str(resp.status) + ' ' + content
         exit
 
-    return err, json.loads(content)
+    return error, json.loads(content)
 
 def _is_authorized():
     username = request.form['username']
     password = request.form['password']
-    print "[_is_account_valid] username = {}, password = {}".format(username, password)
     if username is None or password is None:
         return False
     h = httplib2.Http(".cache")
@@ -47,7 +44,6 @@ def _is_authorized():
         return False
 
     resp_json = json.loads(content)
-    print '[_is_account_valid] content = {}'.format(content)
     session['apiKey'] = resp_json['apiKey']
     session['token']  = resp_json['token']
     return True
@@ -68,10 +64,9 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    print "[form] "
     if request.method == 'POST' and _is_authorized():
         return redirect(url_for('index'))
-    return render_template('login.html', error=u'サインインに失敗しました。')
+    return render_template('login.html')
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -93,6 +88,15 @@ def modify(imsi):
 @app.route('/sim/<imsi>/activate', methods=['GET'])
 def activate(imsi):
     error, sim = _call_api('/subscribers/' + imsi + '/activate', 'POST', {})
+    message = ''
+    if error == '':
+        message = 'SIM {} を利用可能にしました。'.format(imsi)
+    error, sims = _call_api('/subscribers', 'GET', {})
+    return render_template('index.html', sims=sims, message=unicode(message, 'utf-8'), error=error)
+
+@app.route('/sim/<imsi>/deactivate', methods=['GET'])
+def deactivate(imsi):
+    error, sim = _call_api('/subscribers/' + imsi + '/deactivate', 'POST', {})
     message = ''
     if error == '':
         message = 'SIM {} を利用可能にしました。'.format(imsi)

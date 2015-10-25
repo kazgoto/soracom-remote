@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SORACOM Remote - ソラコムSIMのスピード変更を簡単に。</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css')}}">
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}" />
   </head>
   <body>
@@ -24,12 +24,23 @@
 
     <div class="jumbotron" style="margin-top:0px">
     <div class="container" style="width:70%">
-{% if error   %}    <div class="alert alert-danger" role="alert">{{error}}</div>{% endif %}
-{% if message %}    <div class="alert alert-success" role="alert">{{message}}</div>{% endif %}
+{% if error   %}
+    <div class="alert alert-dismissible alert-danger" role="alert">
+      <button type="button" class="close" data-dismiss="alert">×</button>
+      {{error}}
+    </div>
+{% endif %}
+{% if message %}
+    <div class="alert alert-dismissible alert-success" role="alert">
+      <button type="button" class="close" data-dismiss="alert">×</button>
+      {{message}}
+    </div>
+{% endif %}
+
 {% for sim in sims %}
     <h2 style="margin-top:30px">{{sim.tags.name}}</h2>
     <div class="btn-group btn-group-sm" style="margin-right:0px" role="group">
-      <a href="#" class="btn btn-default navbar-btn" disabled="disabled">Status: <strong><em>{{sim.status}}</em></strong></a>
+      <a href="#" class="btn btn-default navbar-btn" disabled="disabled">ステータス: <strong><em>{{sim.status}}</em></strong></a>
     </div>
 {% if sim.status == "active" %}
     <div class="btn-group btn-group-sm" role="group">
