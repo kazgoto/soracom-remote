@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, redirect, make_response, session, url_for
 from functools import wraps
 from urllib import urlencode
 import os
@@ -7,41 +7,15 @@ import httplib2
 import json
 
 api_url  = 'https://api.soracom.io/v1'
-api_auth = {}
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'SORACOM Remote'
 
 # functions
-def check_auth(username, password):
-    global api_auth
-    h = httplib2.Http(".cache")
-    data = json.dumps({
-        "email"    : username,
-        "password" : password
-    })
-    headers = {
-        'Content-Type' : 'application/json',
-        'Accept'       : 'application/json'
-    }
-    resp, content = h.request(api_url + '/auth', 'POST', body=data, headers=headers)
-    if resp.status != 200:
-        print 'Response is bad: ' + str(resp.status) + ' ' + content
-        return False
-
-    api_auth = json.loads(content)
-    return True
-
-def authenticate():
-    """Sends a 401 response that enables basic auth"""
-    return Response(
-    'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
-    {'WWW-Authenticate': 'Basic realm="Login Required"'})
-
-def api_call(path, method, params):
+def _call_api(path, method, params):
     h = httplib2.Http(".cache")
     headers = {
-        'X-Soracom-API-Key' : api_auth['apiKey'],
-        'X-Soracom-Token'   : api_auth['token'],
+        'X-Soracom-API-Key' : session['apiKey'],
+        'X-Soracom-Token'   : session['token'],
         'Content-Type'      : 'application/json'
     }
     resp, content = h.request(api_url + path, method, json.dumps(params), headers=headers)
@@ -53,35 +27,77 @@ def api_call(path, method, params):
 
     return err, json.loads(content)
 
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
+def _is_authorized():
+    username = request.form['username']
+    password = request.form['password']
+    print "[_is_account_valid] username = {}, password = {}".format(username, password)
+    if username is None or password is None:
+        return False
+    h = httplib2.Http(".cache")
+    data = json.dumps({
+        "email"    : request.form.get('username'),
+        "password" : request.form.get('password')
+    })
+    headers = {
+        'Content-Type' : 'application/json',
+        'Accept'       : 'application/json'
+    }
+    resp, content = h.request(api_url + '/auth',  'POST', body=data, headers=headers)
+    if resp.status != 200:
+        return False
+
+    resp_json = json.loads(content)
+    print '[_is_account_valid] content = {}'.format(content)
+    session['apiKey'] = resp_json['apiKey']
+    session['token']  = resp_json['token']
+    return True
 
 # routing
-@app.route('/')
-@requires_auth
+@app.before_request
+def before_request():
+    if session.get('apiKey') is not None:
+        return
+    if request.path == '/login':
+        return
+    return redirect('/login')
+
+@app.route('/', methods=['GET'])
 def index():
-    error, sims = api_call('/subscribers', 'GET', {})
+    error, sims = _call_api('/subscribers', 'GET', {})
     return render_template('index.html', sims=sims, message='', error=error)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    print "[form] "
+    if request.method == 'POST' and _is_authorized():
+        return redirect(url_for('index'))
+    return render_template('login.html', error=u'サインインに失敗しました。')
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    session.pop('apiKey', None)
+    session.pop('token', None)
+    return redirect(url_for('login'))
 
 @app.route('/sim/<imsi>/modify', methods=['GET'])
 def modify(imsi):
     new_type = request.args.get('new_type')
     old_type = request.args.get('old_type')
-    error, sim = api_call('/subscribers/' + imsi + '/update_speed_class', 'POST', { 'speedClass': new_type })
+    error, sim = _call_api('/subscribers/' + imsi + '/update_speed_class', 'POST', { 'speedClass': new_type })
     message = ''
     if error == '':
         message = 'SIM {} のタイプを {} から {} に変更しました。'.format(imsi, old_type, new_type)
-    else:
-        message = error
-    error, sims = api_call('/subscribers', 'GET', {})
+    error, sims = _call_api('/subscribers', 'GET', {})
     return render_template('index.html', sims=sims, message=unicode(message, 'utf-8'), error=error)
 
+@app.route('/sim/<imsi>/activate', methods=['GET'])
+def activate(imsi):
+    error, sim = _call_api('/subscribers/' + imsi + '/activate', 'POST', {})
+    message = ''
+    if error == '':
+        message = 'SIM {} を利用可能にしました。'.format(imsi)
+    error, sims = _call_api('/subscribers', 'GET', {})
+    return render_template('index.html', sims=sims, message=unicode(message, 'utf-8'), error=error)
 
 # main
 if __name__ == '__main__':

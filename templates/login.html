@@ -16,42 +16,34 @@
         <div class="navbar-header">
           <a class="navbar-brand" href="/">SORACOM Remote</a>
         </div>
-        <ul class="nav navbar-nav navbar-right">
-          <li><a href="../logout">サインアウト</a></li>
-        </ul>
-      </div><!--/.nav-collapse -->
+      </div>
     </nav>
 
     <div class="jumbotron" style="margin-top:0px">
-    <div class="container" style="width:70%">
+    <div class="container" style="width:50%">
 {% if error   %}    <div class="alert alert-danger" role="alert">{{error}}</div>{% endif %}
 {% if message %}    <div class="alert alert-success" role="alert">{{message}}</div>{% endif %}
-{% for sim in sims %}
-    <h2 style="margin-top:30px">{{sim.tags.name}}</h2>
-    <div class="btn-group btn-group-sm" style="margin-right:0px" role="group">
-      <a href="#" class="btn btn-default navbar-btn" disabled="disabled">Status: <strong><em>{{sim.status}}</em></strong></a>
-    </div>
-{% if sim.status == "active" %}
-    <div class="btn-group btn-group-sm" role="group">
-      <a href="/sim/{{sim.imsi}}/deactivate" class="btn {% if sim.status == 'inactive' %}btn-primary{% else %}btn-default{% endif %} navbar-btn"><span class="glyphicon glyphicon-off" aria-hidden="true"></span> 休止</a>
-    </div>
-{% endif %}
-{% if sim.status == "inactive" %}
-    <div class="btn-group btn-group-sm" role="group">
-      <a href="/sim/{{sim.imsi}}/activate" class="btn {% if sim.status == 'active' %}btn-primary{% else %}btn-default{% endif %} navbar-btn"><span class="glyphicon glyphicon-flash" aria-hidden="true"></span> 利用開始</a>
-    </div>
-{% endif %}
-{% if sim.status == "active" %}
+    <form class="form-signin" method="post" action="/login">
+      <h2 class="form-signin-heading">サインインします</h2>
+      <label for="inputEmail" class="sr-only">Email address</label>
+      <input type="username" name="username" class="form-control" placeholder="Email address" required autofocus>
+      <label for="inputPassword" class="sr-only">Password</label>
+      <input type="password" name="password" class="form-control" placeholder="Password" required>
+      <div class="checkbox">
+      <button class="btn btn-lg btn-primary btn-block" type="submit">サインイン</button>
+    </form>
+
+{% for sim in sims %}{% if sim.status == "active" %}
+    <h2>{{sim.tags.name}}</h2>
     <div class="btn-group btn-group-sm" role="group">
       {% for type in ['s1.minimum', 's1.slow', 's1.standard', 's1.fast'] %}
-      <a href="/sim/{{sim.imsi}}/modify?new_type={{type}}&amp;old_type={{sim.type}}" class="btn {% if sim.type == type %}btn-primary{% else %}btn-default{% endif %} navbar-btn">
-        {{type}}
-      </a>
+      <button type="button" class="btn {% if sim.type == type %}btn-primary{% else %}btn-default{% endif %} navbar-btn">
+      <!--<button type="button" class="btn btn-default">-->
+        <a href="/sim/{{sim.imsi}}/modify?new_type={{type}}&amp;old_type={{sim.type}}">{{type}}</a>
+      </button>
       {%- endfor %}
     </div>
-{% endif %}
-{% endfor %}
-
+{% endif %}{% endfor %}
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     </div>
