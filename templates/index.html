@@ -48,8 +48,8 @@
     </div>
 {% endif %}
 
-{% for sim in sims %}
-    <h2 style="margin-top:30px">{{sim.tags.name}}</h2>
+{% for sim in sims | sort(attribute = 'status') %}
+    <h2 style="margin-top:30px">{{sim.tags.name|default('')}} <small>IMSI:{{sim.imsi}}</small></h2>
     <div class="btn-group btn-group-sm" style="margin-right:0px" role="group">
       <a href="#" class="btn btn-default navbar-btn" disabled="disabled">ステータス: <strong><em>{{sim.status}}</em></strong></a>
     </div>
